@@ -13,10 +13,10 @@ Buildout sequence. Since a reachable Apollo isn't assumed during development, bu
 
 ## 1. App shell + dashboard
 
-- [ ] 1.1 Dark, low-chrome layout; top nav; multi-service route groups (`/`, `/apollo/**`, stubs for later)
-- [ ] 1.2 `/` service-health dashboard: tiles fed by Apollo's `grpc.health.v1.Health` (auth-exempt) via the BFF
-- [ ] 1.3 Responsive (sidebar → sheet on mobile), matching Muses' breakpoints
-- [ ] 1.4 Disabled "coming soon" nav stubs for future modules (Hermes, Artemis, …) — visible, not built
+- [x] 1.1 Dark, low-chrome layout; top nav; multi-service route groups (`/`, `/apollo/**`, stubs for later)
+- [x] 1.2 `/` service-health dashboard: tiles fed by Apollo's `grpc.health.v1.Health` (auth-exempt) via the BFF
+- [x] 1.3 Responsive (sidebar → sheet on mobile), matching Muses' breakpoints
+- [x] 1.4 Disabled "coming soon" nav stubs for future modules (Hermes, Artemis, …) — visible, not built
 
 ## 2. Apollo BFF bridge (the gRPC boundary)
 
