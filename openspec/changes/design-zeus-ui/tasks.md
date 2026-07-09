@@ -47,8 +47,8 @@ Buildout sequence. Since a reachable Apollo isn't assumed during development, bu
 
 ## 6. Deploy
 
-- [ ] 6.1 Helm chart in `deploy/charts/zeus` + reference Flux `HelmRelease` in `deploy/flux/`; `helm lint`/`template` clean
-- [ ] 6.2 Behind Traefik + cert-manager TLS; lands in Codex `apps/` once its Flux base exists (see `design-codex-deployment`)
+- [x] 6.1 Helm chart in `deploy/charts/zeus` + reference Flux `HelmRelease` in `deploy/flux/`; `helm lint`/`template` clean
+- [x] 6.2 Behind Traefik + cert-manager TLS; lands in Codex `apps/` once its Flux base exists (see `design-codex-deployment`)
 
 ## 7. Go live
 

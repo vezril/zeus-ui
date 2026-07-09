@@ -1,0 +1,7 @@
+apiVersion: v2
+name: zeus
+description: Zeus — the constellation's Next.js operator console (with the Apollo gRPC BFF), exposed via Traefik + cert-manager TLS.
+type: application
+version: 0.1.0
+# Tracks the app's own version; overridden per release by the image tag in values.
+appVersion: "0.1.0"
