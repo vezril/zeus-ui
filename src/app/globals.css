@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Zeus is a dark, low-chrome operator console — dense, calm, information-first.
+ * Dark values live on :root so the app is dark by default; the .dark class
+ * (set on <html>) mirrors them so shadcn-style `dark:` variants also resolve.
+ */
+:root {
+  --background: oklch(0.16 0.006 265);
+  --foreground: oklch(0.92 0.004 265);
+  --card: oklch(0.19 0.006 265);
+  --card-foreground: oklch(0.92 0.004 265);
+  --popover: oklch(0.19 0.006 265);
+  --popover-foreground: oklch(0.92 0.004 265);
+  --primary: oklch(0.72 0.13 220);
+  --primary-foreground: oklch(0.16 0.006 265);
+  --secondary: oklch(0.26 0.008 265);
+  --secondary-foreground: oklch(0.92 0.004 265);
+  --muted: oklch(0.24 0.006 265);
+  --muted-foreground: oklch(0.62 0.006 265);
+  --accent: oklch(0.28 0.01 265);
+  --accent-foreground: oklch(0.95 0.004 265);
+  --destructive: oklch(0.58 0.2 25);
+  --destructive-foreground: oklch(0.98 0.004 265);
+  --border: oklch(0.28 0.008 265);
+  --input: oklch(0.28 0.008 265);
+  --ring: oklch(0.72 0.13 220);
+  --radius: 0.625rem;
+
+  /*
+   * Service-health status palette — for the `/` dashboard tiles fed by each
+   * service's grpc.health.v1.Health. Always paired with a text label
+   * (SERVING / NOT SERVING / UNKNOWN), never color-only, for accessibility.
+   */
+  --status-serving: oklch(0.72 0.18 150);
+  --status-not-serving: oklch(0.62 0.21 25);
+  --status-unknown: oklch(0.72 0.02 265);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-status-serving: var(--status-serving);
+  --color-status-not-serving: var(--status-not-serving);
+  --color-status-unknown: var(--status-unknown);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+.dark {
+  --background: oklch(0.16 0.006 265);
+  --foreground: oklch(0.92 0.004 265);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin, low-chrome scrollbars that fade into the dark surfaces. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}

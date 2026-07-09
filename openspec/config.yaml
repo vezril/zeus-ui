@@ -1,0 +1,28 @@
+schema: spec-driven
+
+context: |
+  Zeus — the constellation's operator/admin console (Next.js). NOT the public gallery (that is
+  Muses); Zeus is a control panel for humans to *manage* services directly. v1 ships the **Apollo**
+  object-store module; the layout is built multi-service from day one (`/` health dashboard,
+  `/apollo/**`, later `/hermes/**`, `/artemis/**`).
+
+  Defining constraint: Apollo is **gRPC-only** with two streaming RPCs (PutObject=client-stream,
+  GetObject=server-stream), so the browser cannot call it directly. Zeus runs a thin **Next.js BFF**
+  — Node-runtime route handlers holding a `@grpc/grpc-js` client to Apollo — which is also the secret
+  boundary (Apollo bearer token + TLS trust stay server-side, never `NEXT_PUBLIC_*`). The browser
+  bundle never speaks gRPC (mirrors the Muses rule); it fetches Zeus's own `/api/apollo/*` routes.
+
+  Stack mirrors Muses: Next.js 15 (App Router) · React 19 · Tailwind v4 · Radix · TanStack Query ·
+  lucide · cva/clsx/tailwind-merge · TypeScript · output:'standalone' · Helm+Flux deploy · dark theme.
+  Additions: `@grpc/grpc-js` in the server tier + TS gRPC stubs generated from the Lexicon `.proto`.
+
+  Access model: LAN-only, no app auth in v1 → the UI is the only guardrail, so destructive actions
+  (DeleteBucket/DeleteObject) sit behind confirmation modals. Apollo listing is eventually consistent
+  → writes use optimistic insert + a visible per-item "syncing" badge + HeadObject confirmation.
+
+  Full design: openspec/changes/design-zeus-ui/design.md.
+
+# Per-artifact rules (optional)
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
