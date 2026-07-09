@@ -1,0 +1,6 @@
+# The proto source is fetched from the Lexicon at a pinned ref (see
+# scripts/fetch-proto.sh) into ./proto — it is not committed here. This module
+# points buf at that materialized tree so `buf generate` can compile it.
+version: v2
+modules:
+  - path: proto

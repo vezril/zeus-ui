@@ -1,0 +1,19 @@
+# Generate TypeScript gRPC stubs from the Apollo proto with ts-proto.
+#
+# outputServices=grpc-js  → client/server definitions for @grpc/grpc-js, which
+#                           the Node-runtime BFF (task 2) uses to reach Apollo.
+# env=node                → server-side stubs (Buffer for `bytes` chunks).
+# forceLong=string        → int64 (generation/size) as JSON-safe strings, so the
+#                           BFF can serialize them to the browser without a Long
+#                           runtime dep or 2^53 precision loss.
+version: v2
+clean: true
+plugins:
+  - local: ./node_modules/.bin/protoc-gen-ts_proto
+    out: src/lib/apollo/gen
+    opt:
+      - outputServices=grpc-js
+      - esModuleInterop=true
+      - env=node
+      - forceLong=string
+      - useOptionals=messages
