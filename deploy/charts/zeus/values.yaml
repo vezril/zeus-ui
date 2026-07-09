@@ -1,0 +1,64 @@
+# Default values for the Zeus chart.
+
+image:
+  # Docker Hub is the source of truth; the homelab pulls via the NAS
+  # pull-through cache. Override repository with your Docker Hub user.
+  repository: zeusui
+  # Pin to a released semver tag in production (matches the release workflow).
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+# Apollo connection. Zeus is a BFF: the browser only ever talks to Zeus's own
+# /api/apollo/* routes; the endpoint, token, and TLS trust stay SERVER-side.
+apollo:
+  # Browser client selector (NOT a secret): the same-origin BFF base path. Set
+  # to "/api/apollo" to use the live BFF; empty keeps the in-browser fixtures.
+  apiBase: "/api/apollo"
+  # host:port of Apollo's gRPC surface (server-side, BFF only). Apollo serves
+  # gRPC on 8443 (h2c by default).
+  endpoint: ""
+  tls:
+    # true dials Apollo over TLS; false uses h2c/cleartext (Apollo's default).
+    enabled: false
+    # PEM trust anchor (or a file path) when tls.enabled. Public, not a secret.
+    ca: ""
+  # Optional bearer token, injected as gRPC authorization metadata. Sourced from
+  # a Kubernetes Secret — never plaintext in values. Leave secretName empty when
+  # Apollo is unauthenticated (its default).
+  token:
+    secretName: ""
+    secretKey: token
+
+service:
+  port: 80
+  targetPort: 3000
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+ingress:
+  enabled: true
+  # Traefik is the ingress controller.
+  className: traefik
+  host: zeus.homelab
+  # cert-manager ClusterIssuer that signs the TLS cert.
+  clusterIssuer: letsencrypt
+  tlsSecretName: zeus-tls
+
+# Run as an unprivileged container (the image already runs as uid 1001; Next.js
+# standalone writes nothing to disk at runtime).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

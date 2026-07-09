@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zeus.fullname" . }}
+  labels:
+    {{- include "zeus.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "zeus.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "zeus.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: zeus
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+          env:
+            # Browser client selector (non-secret, same-origin BFF path).
+            - name: NEXT_PUBLIC_APOLLO_API_BASE
+              value: {{ .Values.apollo.apiBase | quote }}
+            # Server-side Apollo connection (BFF only).
+            - name: APOLLO_ENDPOINT
+              value: {{ .Values.apollo.endpoint | quote }}
+            - name: APOLLO_TLS_ENABLED
+              value: {{ .Values.apollo.tls.enabled | quote }}
+            {{- if .Values.apollo.tls.ca }}
+            - name: APOLLO_TLS_CA
+              value: {{ .Values.apollo.tls.ca | quote }}
+            {{- end }}
+            {{- if .Values.apollo.token.secretName }}
+            # Bearer token from a Secret — never plaintext, never NEXT_PUBLIC_.
+            - name: APOLLO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apollo.token.secretName }}
+                  key: {{ .Values.apollo.token.secretKey }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,56 @@
+# Reference Flux HelmRelease for Zeus. When Codex's Flux base exists
+# (design-codex-deployment), this goes in the codex repo under apps/ alongside
+# the other services. It sources the chart shipped in THIS repo
+# (deploy/charts/zeus) via a Flux GitRepository named `zeus-ui`.
+#
+# Bump `values.image.tag` to a released Docker Hub semver tag to roll out via
+# git (Flux reconciles the change onto the cluster — no manual kubectl).
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: zeus-ui
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://github.com/vezril/zeus-ui
+  ref:
+    branch: main
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: zeus
+  namespace: zeus
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: deploy/charts/zeus
+      sourceRef:
+        kind: GitRepository
+        name: zeus-ui
+        namespace: flux-system
+  values:
+    image:
+      repository: vezril/zeusui
+      tag: 0.1.0
+    replicaCount: 2
+    apollo:
+      # Browser talks only to Zeus's own /api/apollo/* routes.
+      apiBase: /api/apollo
+      # Apollo's gRPC surface (h2c on 8443 by default).
+      endpoint: apollo.apollo.svc.cluster.local:8443
+      tls:
+        enabled: false
+      # Apollo is unauthenticated by default; when a token is required, create a
+      # Secret in the zeus namespace and reference it here:
+      #   token:
+      #     secretName: apollo-token
+      #     secretKey: token
+    ingress:
+      enabled: true
+      className: traefik
+      host: zeus.homelab
+      clusterIssuer: letsencrypt
+      tlsSecretName: zeus-tls
