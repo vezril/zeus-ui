@@ -52,8 +52,8 @@ Buildout sequence. Since a reachable Apollo isn't assumed during development, bu
 
 ## 7. Go live
 
-- [ ] 7.1 Swap `ApolloClient` from fixtures to live via env; wire `APOLLO_ENDPOINT`/`APOLLO_TOKEN`/`APOLLO_TLS_*`
-- [ ] 7.2 End-to-end smoke against a real Apollo: create bucket → upload → list (observe syncing) → download → delete
+- [x] 7.1 Swap `ApolloClient` from fixtures to live via env; wire `APOLLO_ENDPOINT`/`APOLLO_TOKEN`/`APOLLO_TLS_*`
+- [x] 7.2 End-to-end smoke against a real Apollo: create bucket → upload → list (observe syncing) → download → delete
 
 ## Future modules (post-v1 — one service at a time)
 
