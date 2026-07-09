@@ -33,10 +33,10 @@ Buildout sequence. Since a reachable Apollo isn't assumed during development, bu
 
 ## 4. Object browser
 
-- [ ] 4.1 Prefix "folder" navigation — `ListObjects(prefix)`, keyset paged, ordered by key
-- [ ] 4.2 Metadata drawer — `HeadObject` (size/content-type/crc32c/md5/generation), no body fetch
-- [ ] 4.3 Download / image preview — `GetObject` server-stream piped through the BFF
-- [ ] 4.4 Delete object — confirmation modal; disappears once the deletion propagates
+- [x] 4.1 Prefix "folder" navigation — `ListObjects(prefix)`, keyset paged, ordered by key
+- [x] 4.2 Metadata drawer — `HeadObject` (size/content-type/crc32c/md5/generation), no body fetch
+- [x] 4.3 Download / image preview — `GetObject` server-stream piped through the BFF
+- [x] 4.4 Delete object — confirmation modal; disappears once the deletion propagates
 
 ## 5. Object upload
 
