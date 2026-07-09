@@ -11,6 +11,7 @@ import {
   Folder,
   Loader2,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import type { ObjectEntry } from "@/lib/apollo";
@@ -22,19 +23,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ObjectMetadataDrawer } from "./object-metadata-drawer";
 import { DeleteObjectDialog } from "./delete-object-dialog";
+import { UploadDialog } from "./upload-dialog";
+
+interface FileRow {
+  key: string;
+  size: string | null;
+  deleting: boolean;
+  syncing: boolean;
+}
 
 /**
- * Object browser (tasks 4.1–4.4). Lists a bucket's objects under the current
- * prefix (keyset paged), deriving S3-style "folders" from the next key segment.
- * Clicking a file opens the HeadObject metadata drawer; deletion goes behind a
- * confirmation modal and the row shows a "deleting" state until it leaves the
- * eventually-consistent listing.
+ * Object browser (tasks 4.1–4.4 + 5.3 syncing). Lists a bucket's objects under
+ * the current prefix (keyset paged), deriving S3-style "folders" from the next
+ * key segment. Clicking a file opens the HeadObject metadata drawer; deletion
+ * goes behind a confirmation modal; and newly uploaded objects appear
+ * immediately with a "syncing" badge until the read model catches up.
  */
 export function ObjectBrowser({ bucket }: { bucket: string }) {
   const [prefix, setPrefix] = React.useState("");
   const [selected, setSelected] = React.useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState<string[]>([]);
+  const [uploadOpen, setUploadOpen] = React.useState(false);
+  const [pending, setPending] = React.useState<string[]>([]);
 
   const query = useInfiniteObjects(bucket, prefix);
   const {
@@ -66,23 +77,51 @@ export function ObjectBrowser({ bucket }: { bucket: string }) {
     }
     return {
       folders: [...folderSet].sort(),
-      files: leaves.sort((a, b) => a.object.localeCompare(b.object)),
+      files: leaves,
     };
   }, [objects, prefix]);
 
-  // Drop a key from the deleting set once it leaves the listing.
-  React.useEffect(() => {
-    if (deleting.length === 0) return;
-    const present = new Set(objects.map((o) => o.object));
-    setDeleting((prev) => prev.filter((k) => present.has(k)));
-  }, [objects, deleting.length]);
+  const fetchedKeys = React.useMemo(
+    () => new Set(objects.map((o) => o.object)),
+    [objects]
+  );
 
-  // Keep polling the eventually-consistent listing while a delete settles.
+  // Merge fetched leaves with still-syncing uploaded keys at this prefix level.
+  const fileRows: FileRow[] = React.useMemo(() => {
+    const rows: FileRow[] = files.map((o) => ({
+      key: o.object,
+      size: o.size,
+      deleting: deleting.includes(o.object),
+      syncing: false,
+    }));
+    for (const key of pending) {
+      if (
+        key.startsWith(prefix) &&
+        !key.slice(prefix.length).includes("/") &&
+        !fetchedKeys.has(key)
+      ) {
+        rows.push({ key, size: null, deleting: false, syncing: true });
+      }
+    }
+    return rows.sort((a, b) => a.key.localeCompare(b.key));
+  }, [files, pending, prefix, deleting, fetchedKeys]);
+
+  // Drop pending/deleting keys once the listing reflects them, and poll the
+  // eventually-consistent read model while either is outstanding.
   React.useEffect(() => {
-    if (deleting.length === 0) return;
+    if (pending.length) {
+      setPending((prev) => prev.filter((k) => !fetchedKeys.has(k)));
+    }
+    if (deleting.length) {
+      setDeleting((prev) => prev.filter((k) => fetchedKeys.has(k)));
+    }
+  }, [fetchedKeys, pending.length, deleting.length]);
+
+  React.useEffect(() => {
+    if (pending.length === 0 && deleting.length === 0) return;
     const id = setInterval(() => void refetch(), 2000);
     return () => clearInterval(id);
-  }, [deleting.length, refetch]);
+  }, [pending.length, deleting.length, refetch]);
 
   // Sentinel-driven keyset paging.
   const sentinelRef = React.useRef<HTMLDivElement | null>(null);
@@ -126,38 +165,46 @@ export function ObjectBrowser({ bucket }: { bucket: string }) {
         Buckets
       </Link>
 
-      {/* Breadcrumb */}
-      <nav className="mb-5 flex flex-wrap items-center gap-1 text-sm" aria-label="Prefix">
-        <button
-          onClick={() => setPrefix("")}
-          className={cn(
-            "font-mono font-medium",
-            prefix ? "text-primary hover:underline" : "text-foreground"
-          )}
+      <div className="mb-5 flex items-center justify-between gap-3">
+        {/* Breadcrumb */}
+        <nav
+          className="flex flex-wrap items-center gap-1 text-sm"
+          aria-label="Prefix"
         >
-          {bucket}
-        </button>
-        {segments.map((seg, i) => {
-          const to = segments.slice(0, i + 1).join("/") + "/";
-          const isLast = i === segments.length - 1;
-          return (
-            <React.Fragment key={to}>
-              <span className="text-muted-foreground/50">/</span>
-              <button
-                onClick={() => setPrefix(to)}
-                className={cn(
-                  "font-mono",
-                  isLast
-                    ? "text-foreground"
-                    : "text-primary hover:underline"
-                )}
-              >
-                {seg}
-              </button>
-            </React.Fragment>
-          );
-        })}
-      </nav>
+          <button
+            onClick={() => setPrefix("")}
+            className={cn(
+              "font-mono font-medium",
+              prefix ? "text-primary hover:underline" : "text-foreground"
+            )}
+          >
+            {bucket}
+          </button>
+          {segments.map((seg, i) => {
+            const to = segments.slice(0, i + 1).join("/") + "/";
+            const isLast = i === segments.length - 1;
+            return (
+              <React.Fragment key={to}>
+                <span className="text-muted-foreground/50">/</span>
+                <button
+                  onClick={() => setPrefix(to)}
+                  className={cn(
+                    "font-mono",
+                    isLast ? "text-foreground" : "text-primary hover:underline"
+                  )}
+                >
+                  {seg}
+                </button>
+              </React.Fragment>
+            );
+          })}
+        </nav>
+
+        <Button size="sm" className="shrink-0" onClick={() => setUploadOpen(true)}>
+          <Upload className="size-4" />
+          Upload
+        </Button>
+      </div>
 
       {isLoading ? (
         <div className="space-y-2">
@@ -171,9 +218,9 @@ export function ObjectBrowser({ bucket }: { bucket: string }) {
           <p>Couldn&apos;t load objects.</p>
           <p className="text-xs">{(error as Error)?.message}</p>
         </div>
-      ) : folders.length === 0 && files.length === 0 ? (
+      ) : folders.length === 0 && fileRows.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border py-24 text-center text-sm text-muted-foreground">
-          Nothing here yet.
+          Nothing here yet. Upload the first object.
         </div>
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
@@ -192,41 +239,46 @@ export function ObjectBrowser({ bucket }: { bucket: string }) {
             </li>
           ))}
 
-          {files.map((o) => {
-            const isDeleting = deleting.includes(o.object);
+          {fileRows.map((row) => {
+            const busy = row.deleting || row.syncing;
             return (
               <li
-                key={o.object}
+                key={row.key}
                 className={cn(
                   "flex items-center gap-3 bg-card px-4 py-3 transition-colors hover:bg-accent/40",
-                  isDeleting && "opacity-50"
+                  row.deleting && "opacity-50"
                 )}
               >
                 <FileIcon className="size-4 shrink-0 text-muted-foreground" />
                 <button
-                  onClick={() => setSelected(o.object)}
-                  disabled={isDeleting}
-                  className="min-w-0 flex-1 truncate text-left font-mono text-sm hover:underline"
+                  onClick={() => setSelected(row.key)}
+                  disabled={busy}
+                  className="min-w-0 flex-1 truncate text-left font-mono text-sm hover:underline disabled:no-underline"
                 >
-                  {o.object.slice(prefix.length)}
+                  {row.key.slice(prefix.length)}
                 </button>
-                {isDeleting ? (
+                {row.syncing ? (
+                  <Badge variant="muted" className="shrink-0">
+                    <Loader2 className="size-3 animate-spin" />
+                    syncing
+                  </Badge>
+                ) : row.deleting ? (
                   <Badge variant="muted" className="shrink-0">
                     <Loader2 className="size-3 animate-spin" />
                     deleting
                   </Badge>
                 ) : (
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {formatBytes(o.size)}
+                    {formatBytes(row.size ?? "0")}
                   </span>
                 )}
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={`Delete ${o.object}`}
+                  aria-label={`Delete ${row.key}`}
                   className="shrink-0 text-muted-foreground hover:text-destructive"
-                  disabled={isDeleting}
-                  onClick={() => setDeleteTarget(o.object)}
+                  disabled={busy}
+                  onClick={() => setDeleteTarget(row.key)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -242,7 +294,7 @@ export function ObjectBrowser({ bucket }: { bucket: string }) {
           <span className="flex items-center gap-2">
             <Loader2 className="size-4 animate-spin" /> Loading more…
           </span>
-        ) : !hasNextPage && files.length + folders.length > 0 ? (
+        ) : !hasNextPage && fileRows.length + folders.length > 0 ? (
           <span className="flex items-center gap-2">
             <CheckCircle2 className="size-4" /> End of listing
           </span>
@@ -269,6 +321,17 @@ export function ObjectBrowser({ bucket }: { bucket: string }) {
           }
         }}
         onConfirm={confirmDelete}
+      />
+
+      <UploadDialog
+        bucket={bucket}
+        prefix={prefix}
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        onUploaded={(key) => {
+          setPending((prev) => (prev.includes(key) ? prev : [...prev, key]));
+          void refetch();
+        }}
       />
     </div>
   );

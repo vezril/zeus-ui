@@ -40,10 +40,10 @@ Buildout sequence. Since a reachable Apollo isn't assumed during development, bu
 
 ## 5. Object upload
 
-- [ ] 5.1 Drag-drop + picker; local preview; content-type detection; object-key validation (≤1024 bytes, no traversal)
-- [ ] 5.2 Stream bytes through the BFF to `PutObject` (header then chunks) with a progress indicator
-- [ ] 5.3 Visible syncing: optimistic insert + per-item "syncing" badge + background `HeadObject`/refetch confirm
-- [ ] 5.4 Show the returned generation + computed checksums; v1 sends no `expected_*` checksums
+- [x] 5.1 Drag-drop + picker; local preview; content-type detection; object-key validation (≤1024 bytes, no traversal)
+- [x] 5.2 Stream bytes through the BFF to `PutObject` (header then chunks) with a progress indicator
+- [x] 5.3 Visible syncing: optimistic insert + per-item "syncing" badge + background `HeadObject`/refetch confirm
+- [x] 5.4 Show the returned generation + computed checksums; v1 sends no `expected_*` checksums
 
 ## 6. Deploy
 

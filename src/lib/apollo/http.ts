@@ -92,22 +92,39 @@ export function httpClient(base: string): ApolloClient {
       );
     },
 
-    async putObject(
+    putObject(
       input: PutObjectInput,
       onProgress?: (fraction: number) => void
     ): Promise<PutObjectResult> {
-      // Streamed upload with progress is wired in task 5.2; a plain streaming
-      // POST is the baseline. onProgress is accepted now for a stable interface.
-      onProgress?.(0);
-      const result = await json<PutObjectResult>(
-        await fetch(url(objectPath(input.bucket, input.object)), {
-          method: "POST",
-          headers: { "content-type": input.contentType },
-          body: input.body,
-        })
-      );
-      onProgress?.(1);
-      return result;
+      // XHR (not fetch) so the browser reports real upload progress; the BFF
+      // still streams the received body chunk-by-chunk into PutObject.
+      return new Promise<PutObjectResult>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", url(objectPath(input.bucket, input.object)));
+        xhr.setRequestHeader("content-type", input.contentType);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress?.(e.loaded / e.total);
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            onProgress?.(1);
+            try {
+              resolve(JSON.parse(xhr.responseText) as PutObjectResult);
+            } catch {
+              reject(new Error("Apollo: malformed upload response"));
+            }
+          } else {
+            reject(
+              new Error(
+                `Apollo ${xhr.status} ${xhr.statusText}: ${xhr.responseText}`
+              )
+            );
+          }
+        };
+        xhr.onerror = () => reject(new Error("Apollo: upload network error"));
+        onProgress?.(0);
+        xhr.send(input.body);
+      });
     },
 
     objectUrl(bucket: string, object: string): string {
