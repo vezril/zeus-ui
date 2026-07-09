@@ -8,7 +8,7 @@ Buildout sequence. Since a reachable Apollo isn't assumed during development, bu
 
 - [x] 0.1 Next.js 15 (App Router) + TypeScript + Tailwind v4 + Radix + TanStack Query (match Muses)
 - [x] 0.2 Dark operator-console theme tokens; `output: 'standalone'`; Dockerfile → Docker Hub + CI (sibling-repo pattern)
-- [ ] 0.3 Generate TS gRPC stubs from the Lexicon `apollostorage/grpc/object_api.proto` (buf/ts-proto; proto sourced from the Lexicon, not forked)
+- [x] 0.3 Generate TS gRPC stubs from the Lexicon `apollostorage/grpc/object_api.proto` (buf/ts-proto; proto sourced from the Lexicon, not forked)
 - [ ] 0.4 Typed `ApolloClient` interface + fixtures/mocks + env-selected http impl (`getClient()`, mirrors Muses `src/lib/api`)
 
 ## 1. App shell + dashboard

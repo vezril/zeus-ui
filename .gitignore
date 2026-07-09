@@ -22,6 +22,10 @@ coverage/
 .vercel
 *.tsbuildinfo
 
+# Proto source is fetched from the Lexicon at a pinned ref, not fork-copied.
+# (The generated TS stubs under src/lib/apollo/gen ARE committed.)
+/proto/
+
 # Logs
 *.log
 npm-debug.log*
