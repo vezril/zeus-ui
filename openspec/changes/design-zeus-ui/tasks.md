@@ -27,9 +27,9 @@ Buildout sequence. Since a reachable Apollo isn't assumed during development, bu
 
 ## 3. Bucket management
 
-- [ ] 3.1 List buckets — `ListBuckets` keyset infinite scroll (`useInfiniteQuery`, `page_token`)
-- [ ] 3.2 Create bucket — dialog with client-side name validation (3–63, lowercase alnum+hyphen, start/end alnum) + server error backstop
-- [ ] 3.3 Delete bucket — type-to-confirm modal showing object count + **orphan warning** (not empty-checked, blobs not cascaded)
+- [x] 3.1 List buckets — `ListBuckets` keyset infinite scroll (`useInfiniteQuery`, `page_token`)
+- [x] 3.2 Create bucket — dialog with client-side name validation (3–63, lowercase alnum+hyphen, start/end alnum) + server error backstop
+- [x] 3.3 Delete bucket — type-to-confirm modal showing object count + **orphan warning** (not empty-checked, blobs not cascaded)
 
 ## 4. Object browser
 
