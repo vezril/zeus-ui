@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { TopNav } from "@/components/shell/top-nav";
+import { AppSidebar } from "@/components/shell/app-sidebar";
 
 export const metadata: Metadata = {
   title: {
@@ -22,7 +24,11 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground">
         <Providers>
           <div className="flex min-h-screen flex-col">
-            <main className="flex-1">{children}</main>
+            <TopNav />
+            <div className="flex flex-1">
+              <AppSidebar />
+              <main className="min-w-0 flex-1">{children}</main>
+            </div>
           </div>
         </Providers>
       </body>
