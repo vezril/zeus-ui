@@ -20,10 +20,10 @@ Buildout sequence. Since a reachable Apollo isn't assumed during development, bu
 
 ## 2. Apollo BFF bridge (the gRPC boundary)
 
-- [ ] 2.1 Node-runtime route handlers under `/api/apollo/*` (`export const runtime = 'nodejs'`)
-- [ ] 2.2 `@grpc/grpc-js` client factory: `APOLLO_ENDPOINT` + server-side `APOLLO_TOKEN` (bearer metadata) + `APOLLO_TLS_*`
-- [ ] 2.3 gRPC-status → HTTP mapping (ALREADY_EXISTS→409, INVALID_ARGUMENT→400, FAILED_PRECONDITION→412, NOT_FOUND→404, UNAUTHENTICATED→502)
-- [ ] 2.4 Streaming plumbing: request `ReadableStream` → `PutObject` client-stream; `GetObject` server-stream → `Response` body stream
+- [x] 2.1 Node-runtime route handlers under `/api/apollo/*` (`export const runtime = 'nodejs'`)
+- [x] 2.2 `@grpc/grpc-js` client factory: `APOLLO_ENDPOINT` + server-side `APOLLO_TOKEN` (bearer metadata) + `APOLLO_TLS_*`
+- [x] 2.3 gRPC-status → HTTP mapping (ALREADY_EXISTS→409, INVALID_ARGUMENT→400, FAILED_PRECONDITION→412, NOT_FOUND→404, UNAUTHENTICATED→502)
+- [x] 2.4 Streaming plumbing: request `ReadableStream` → `PutObject` client-stream; `GetObject` server-stream → `Response` body stream
 
 ## 3. Bucket management
 
