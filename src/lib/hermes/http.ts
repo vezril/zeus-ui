@@ -6,7 +6,17 @@
  */
 import type { HealthStatus } from "@/lib/apollo/types";
 import type { HermesClient } from "./client";
-import type { Labels, Subscription, Topic, TopicSummary } from "./types";
+import { isInspectorSub } from "./inspector";
+import type {
+  Labels,
+  PublishInput,
+  PublishResult,
+  Subscription,
+  TapHandle,
+  TapMessage,
+  Topic,
+  TopicSummary,
+} from "./types";
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -76,6 +86,50 @@ export function httpHermesClient(base: string): HermesClient {
           body: JSON.stringify({ subscriptionId, topicId }),
         })
       );
+    },
+
+    async publish(input: PublishInput): Promise<PublishResult> {
+      return json(
+        await fetch(url(`/publish`), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(input),
+        })
+      );
+    },
+
+    openTap(topicId: string): TapHandle {
+      const es = new EventSource(url(`/tap?topic=${encodeURIComponent(topicId)}`));
+      const messageCbs = new Set<(m: TapMessage) => void>();
+      let statusCb: ((s: "open" | "error" | "closed") => void) | null = null;
+      es.addEventListener("message", (e) => {
+        try {
+          const m = JSON.parse(e.data) as TapMessage;
+          messageCbs.forEach((cb) => cb(m));
+        } catch {
+          // Ignore malformed frames (e.g. keep-alive comments).
+        }
+      });
+      es.addEventListener("tap-error", () => statusCb?.("error"));
+      es.onopen = () => statusCb?.("open");
+      es.onerror = () => statusCb?.("error");
+      return {
+        onMessage: (cb) => messageCbs.add(cb),
+        onStatus: (cb) => {
+          statusCb = cb;
+        },
+        close: () => {
+          es.close();
+          statusCb?.("closed");
+        },
+      };
+    },
+
+    async realSubscriberCount(topicId: string): Promise<number> {
+      const subs = await json<Subscription[]>(await fetch(url(`/subscriptions`)));
+      return subs.filter(
+        (s) => s.topicId === topicId && !isInspectorSub(s.subscriptionId)
+      ).length;
     },
 
     async checkHealth(): Promise<HealthStatus> {

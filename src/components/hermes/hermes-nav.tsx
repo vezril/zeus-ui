@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Send, Waypoints } from "lucide-react";
+import { Radio, Send, Waypoints } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/hermes", label: "Topics", icon: Send },
   { href: "/hermes/subscriptions", label: "Subscriptions", icon: Waypoints },
+  { href: "/hermes/playground", label: "Playground", icon: Radio },
 ];
 
 /** In-module Topics ⇄ Subscriptions navigation, shared across the Hermes views. */

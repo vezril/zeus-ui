@@ -5,7 +5,15 @@
  * `NEXT_PUBLIC_HERMES_API_BASE` in `index.ts`. Mirrors the Apollo client seam.
  */
 import type { HealthStatus } from "@/lib/apollo/types";
-import type { Labels, Subscription, Topic, TopicSummary } from "./types";
+import type {
+  Labels,
+  PublishInput,
+  PublishResult,
+  Subscription,
+  TapHandle,
+  Topic,
+  TopicSummary,
+} from "./types";
 
 export interface HermesClient {
   /** GET /api/hermes/topics — list topics (id + published count; deleted excluded). */
@@ -28,6 +36,19 @@ export interface HermesClient {
 
   /** POST /api/hermes/subscriptions — create a subscription bound to a topic. */
   createSubscription(subscriptionId: string, topicId: string): Promise<void>;
+
+  /** POST /api/hermes/publish — publish a message to a topic. */
+  publish(input: PublishInput): Promise<PublishResult>;
+
+  /**
+   * Open a live tap on a topic (via a Zeus-managed inspector subscription).
+   * Live: an EventSource over the SSE `/api/hermes/tap`. Fixtures: an in-memory
+   * echo of messages published this session.
+   */
+  openTap(topicId: string): TapHandle;
+
+  /** GET /api/hermes/subscriptions filtered — count of real (non-inspector) subscribers on a topic. */
+  realSubscriberCount(topicId: string): Promise<number>;
 
   /** GET /api/hermes/health — HermesMQ health via the BFF (for the dashboard tile). */
   checkHealth(): Promise<HealthStatus>;

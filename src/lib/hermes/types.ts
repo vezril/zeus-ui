@@ -38,3 +38,46 @@ export interface Subscription {
   redeliveredTotal: number;
   deadLetteredTotal: number;
 }
+
+// --- Playground: publish + live tap ---
+
+/** Input to publish a message to a topic (REST publish exposes ttl + idempotency). */
+export interface PublishInput {
+  topicId: string;
+  payload: string;
+  attributes: Labels;
+  ttlSeconds?: number;
+  idempotencyKey?: string;
+}
+
+/** `POST /v1/topics/{id}/messages` result. */
+export interface PublishResult {
+  messageId: string;
+  deduplicated: boolean;
+}
+
+/**
+ * A message observed on the inspector tap (a fan-out copy of a topic's traffic).
+ * HermesMQ's REST pull carries no original message id, so `id` is a per-
+ * observation identifier (the ack id live / a uuid in fixtures) used for keys;
+ * message identity/"mine" is carried in `attributes` (the playground stamps a
+ * marker attribute on its own publishes).
+ */
+export interface TapMessage {
+  id: string;
+  payload: string;
+  /** false when the payload is not valid UTF-8 text (binary — flagged, not rendered). */
+  isText: boolean;
+  attributes: Labels;
+  publishTime: string;
+}
+
+/** Attribute the playground stamps on its own publishes so the tap can flag them "mine". */
+export const TAP_ORIGIN_ATTR = "x-zeus-tap-origin";
+
+/** A live tap on a topic. `onMessage` fires per arriving message; `close()` stops it. */
+export interface TapHandle {
+  onMessage(cb: (message: TapMessage) => void): void;
+  onStatus(cb: (status: "open" | "error" | "closed") => void): void;
+  close(): void;
+}
