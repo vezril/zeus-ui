@@ -5,7 +5,7 @@
  * `NEXT_PUBLIC_HERMES_API_BASE` in `index.ts`. Mirrors the Apollo client seam.
  */
 import type { HealthStatus } from "@/lib/apollo/types";
-import type { Labels, Topic, TopicSummary } from "./types";
+import type { Labels, Subscription, Topic, TopicSummary } from "./types";
 
 export interface HermesClient {
   /** GET /api/hermes/topics — list topics (id + published count; deleted excluded). */
@@ -22,6 +22,12 @@ export interface HermesClient {
 
   /** DELETE /api/hermes/topics/{id} — delete a topic. */
   deleteTopic(topicId: string): Promise<void>;
+
+  /** GET /api/hermes/subscriptions — subscriptions with their queue-health stats. */
+  listSubscriptions(): Promise<Subscription[]>;
+
+  /** POST /api/hermes/subscriptions — create a subscription bound to a topic. */
+  createSubscription(subscriptionId: string, topicId: string): Promise<void>;
 
   /** GET /api/hermes/health — HermesMQ health via the BFF (for the dashboard tile). */
   checkHealth(): Promise<HealthStatus>;

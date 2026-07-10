@@ -9,13 +9,22 @@
 /** The reserved tenant-namespace separator HermesMQ forbids in external ids. */
 export const RESERVED_SEPARATOR = "~";
 
-/** Returns an error message, or null when the topic id is valid. */
-export function validateTopicId(topicId: string): string | null {
-  if (topicId.trim().length === 0) {
-    return "Topic id must not be blank.";
+/**
+ * Validate any HermesMQ external id (topic id, subscription id) against the
+ * server rules: non-blank and not containing the reserved separator. `label`
+ * names the field for the message. Returns an error message, or null when valid.
+ */
+export function validateHermesId(id: string, label = "Id"): string | null {
+  if (id.trim().length === 0) {
+    return `${label} must not be blank.`;
   }
-  if (topicId.includes(RESERVED_SEPARATOR)) {
-    return `Topic id must not contain '${RESERVED_SEPARATOR}'.`;
+  if (id.includes(RESERVED_SEPARATOR)) {
+    return `${label} must not contain '${RESERVED_SEPARATOR}'.`;
   }
   return null;
+}
+
+/** Returns an error message, or null when the topic id is valid. */
+export function validateTopicId(topicId: string): string | null {
+  return validateHermesId(topicId, "Topic id");
 }
