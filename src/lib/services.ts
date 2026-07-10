@@ -39,9 +39,10 @@ export const SERVICES: ServiceDef[] = [
   {
     key: "hermes",
     name: "Hermes",
-    blurb: "Message queue — lanes, topics, DLQ",
+    blurb: "Message queue — topics, publish, DLQ",
     icon: Send,
-    status: "coming-soon",
+    status: "active",
+    href: "/hermes",
   },
   {
     key: "artemis",

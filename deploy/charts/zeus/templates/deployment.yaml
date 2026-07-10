@@ -44,6 +44,18 @@ spec:
                   name: {{ .Values.apollo.token.secretName }}
                   key: {{ .Values.apollo.token.secretKey }}
             {{- end }}
+            # Hermes module (REST BFF): browser selector + server-side connection.
+            - name: NEXT_PUBLIC_HERMES_API_BASE
+              value: {{ .Values.hermes.apiBase | quote }}
+            - name: HERMES_ENDPOINT
+              value: {{ .Values.hermes.endpoint | quote }}
+            {{- if .Values.hermes.token.secretName }}
+            - name: HERMES_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hermes.token.secretName }}
+                  key: {{ .Values.hermes.token.secretKey }}
+            {{- end }}
           readinessProbe:
             httpGet:
               path: /

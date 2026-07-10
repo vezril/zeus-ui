@@ -48,6 +48,15 @@ spec:
       #   token:
       #     secretName: apollo-token
       #     secretKey: token
+    hermes:
+      # Browser talks only to Zeus's own /api/hermes/* routes.
+      apiBase: /api/hermes
+      # HermesMQ's REST API (HTTP on 8080).
+      endpoint: http://hermes.hermes.svc.cluster.local:8080
+      # Open/single-tenant by default; reference a Secret when auth is on:
+      #   token:
+      #     secretName: hermes-token
+      #     secretKey: token
     ingress:
       enabled: true
       className: traefik

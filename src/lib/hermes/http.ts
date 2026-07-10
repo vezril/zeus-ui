@@ -1,0 +1,68 @@
+/**
+ * Live HTTP implementation of the Hermes client. It calls Zeus's own
+ * `/api/hermes/*` BFF routes (the Node-runtime REST proxy, task 2) — never
+ * HermesMQ directly, so the browser holds no endpoint or token. Selected by
+ * `NEXT_PUBLIC_HERMES_API_BASE` in index.ts.
+ */
+import type { HealthStatus } from "@/lib/apollo/types";
+import type { HermesClient } from "./client";
+import type { Labels, Topic, TopicSummary } from "./types";
+
+async function json<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Hermes ${res.status} ${res.statusText}: ${body}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function expectOk(res: Response): Promise<void> {
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Hermes ${res.status} ${res.statusText}: ${body}`);
+  }
+}
+
+export function httpHermesClient(base: string): HermesClient {
+  const root = base.replace(/\/$/, "");
+  const url = (path: string) => `${root}${path}`;
+  const topicPath = (id: string) => `/topics/${encodeURIComponent(id)}`;
+
+  return {
+    async listTopics(): Promise<TopicSummary[]> {
+      return json(await fetch(url(`/topics`)));
+    },
+
+    async getTopic(topicId: string): Promise<Topic> {
+      return json(await fetch(url(topicPath(topicId))));
+    },
+
+    async createTopic(topicId: string, labels?: Labels): Promise<void> {
+      await expectOk(
+        await fetch(url(`/topics`), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ topicId, labels: labels ?? {} }),
+        })
+      );
+    },
+
+    async updateLabels(topicId: string, labels: Labels): Promise<void> {
+      await expectOk(
+        await fetch(url(topicPath(topicId)), {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ labels }),
+        })
+      );
+    },
+
+    async deleteTopic(topicId: string): Promise<void> {
+      await expectOk(await fetch(url(topicPath(topicId)), { method: "DELETE" }));
+    },
+
+    async checkHealth(): Promise<HealthStatus> {
+      return json(await fetch(url(`/health`)));
+    },
+  };
+}
