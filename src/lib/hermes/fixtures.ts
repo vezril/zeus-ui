@@ -6,7 +6,17 @@
  */
 import type { HealthStatus } from "@/lib/apollo/types";
 import type { HermesClient } from "./client";
-import type { Labels, Subscription, Topic, TopicSummary } from "./types";
+import { isInspectorSub } from "./inspector";
+import type {
+  Labels,
+  PublishInput,
+  PublishResult,
+  Subscription,
+  TapHandle,
+  TapMessage,
+  Topic,
+  TopicSummary,
+} from "./types";
 
 interface StoredTopic {
   labels: Labels;
@@ -26,6 +36,11 @@ const store = new Map<string, StoredTopic>([
   [
     "audit.log",
     { labels: {}, publishedTotal: 902_113, deleted: false },
+  ],
+  [
+    // A clean topic with no real subscribers — the safe playground target.
+    "zeus.playground",
+    { labels: { purpose: "scratch" }, publishedTotal: 0, deleted: false },
   ],
 ]);
 
@@ -71,6 +86,14 @@ const subscriptions = new Map<string, Subscription>([
     },
   ],
 ]);
+
+// In-memory tap registry: topicId → set of live feed callbacks. Fixtures simulate
+// a tap by echoing published messages back to any open tap on that topic.
+const taps = new Map<string, Set<(m: TapMessage) => void>>();
+
+function emitToTaps(topicId: string, message: TapMessage): void {
+  taps.get(topicId)?.forEach((cb) => cb(message));
+}
 
 export function fixtureHermesClient(): HermesClient {
   return {
@@ -122,6 +145,51 @@ export function fixtureHermesClient(): HermesClient {
         redeliveredTotal: 0,
         deadLetteredTotal: 0,
       });
+    },
+
+    async publish(input: PublishInput): Promise<PublishResult> {
+      const messageId = crypto.randomUUID();
+      // Echo onto any open tap for this topic so the "see interactions" loop works.
+      emitToTaps(input.topicId, {
+        id: crypto.randomUUID(),
+        payload: input.payload,
+        isText: true,
+        attributes: { ...input.attributes },
+        publishTime: new Date().toISOString(),
+      });
+      const t = store.get(input.topicId);
+      if (t) t.publishedTotal += 1;
+      return { messageId, deduplicated: false };
+    },
+
+    openTap(topicId: string): TapHandle {
+      const cbs = new Set<(m: TapMessage) => void>();
+      let statusCb: ((s: "open" | "error" | "closed") => void) | null = null;
+      let set = taps.get(topicId);
+      if (!set) {
+        set = new Set();
+        taps.set(topicId, set);
+      }
+      const bridge = (m: TapMessage) => cbs.forEach((cb) => cb(m));
+      set.add(bridge);
+      // Announce "open" asynchronously so callers can wire onStatus first.
+      queueMicrotask(() => statusCb?.("open"));
+      return {
+        onMessage: (cb) => cbs.add(cb),
+        onStatus: (cb) => {
+          statusCb = cb;
+        },
+        close: () => {
+          taps.get(topicId)?.delete(bridge);
+          statusCb?.("closed");
+        },
+      };
+    },
+
+    async realSubscriberCount(topicId: string): Promise<number> {
+      return [...subscriptions.values()].filter(
+        (s) => s.topicId === topicId && !isInspectorSub(s.subscriptionId)
+      ).length;
     },
 
     async checkHealth(): Promise<HealthStatus> {
