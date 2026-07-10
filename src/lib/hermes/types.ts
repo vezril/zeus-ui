@@ -23,3 +23,18 @@ export interface Topic {
   topicId: string;
   labels: Labels;
 }
+
+/**
+ * A subscription with its queue-health stats, from `GET /v1/subscriptions`
+ * (an eventually-consistent stats projection). `backlog` is the queue depth;
+ * `deadLetteredTotal` is the dead-letter count (HermesMQ exposes no DLQ message
+ * browse/replay — only this count).
+ */
+export interface Subscription {
+  subscriptionId: string;
+  topicId: string;
+  backlog: number;
+  oldestUnackedAgeSeconds: number;
+  redeliveredTotal: number;
+  deadLetteredTotal: number;
+}
