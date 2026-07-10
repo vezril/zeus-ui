@@ -31,6 +31,21 @@ apollo:
     secretName: ""
     secretKey: token
 
+# Hermes connection. Unlike Apollo (gRPC), HermesMQ is REST, so the BFF proxies
+# its /v1 REST admin API. Same secret boundary — token stays server-side.
+hermes:
+  # Browser client selector (NOT a secret): the same-origin BFF base path. Set
+  # to "/api/hermes" to use the live BFF; empty keeps the in-browser fixtures.
+  apiBase: "/api/hermes"
+  # Base URL of HermesMQ's REST API (server-side, BFF only). HermesMQ serves
+  # HTTP on 8080. e.g. http://hermes.hermes.svc.cluster.local:8080
+  endpoint: ""
+  # Optional bearer token for Hermes's auth'd /v1 admin API, from a Kubernetes
+  # Secret — never plaintext. Leave secretName empty for open/single-tenant.
+  token:
+    secretName: ""
+    secretKey: token
+
 service:
   port: 80
   targetPort: 3000

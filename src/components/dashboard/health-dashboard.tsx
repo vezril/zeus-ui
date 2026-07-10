@@ -3,8 +3,22 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { getClient } from "@/lib/apollo";
+import type { HealthStatus } from "@/lib/apollo";
+import { getHermesClient } from "@/lib/hermes";
 import { SERVICES } from "@/lib/services";
 import { HealthTile, type TileState } from "./health-tile";
+
+/** Dispatch a health check to the right service client (each fronts its own BFF). */
+function healthCheckFor(key: string): Promise<HealthStatus> {
+  switch (key) {
+    case "apollo":
+      return getClient().checkHealth();
+    case "hermes":
+      return getHermesClient().checkHealth();
+    default:
+      return Promise.resolve("UNKNOWN");
+  }
+}
 
 /**
  * The `/` service-health dashboard (task 1.2). One tile per constellation
@@ -49,8 +63,8 @@ function ActiveServiceTile({
 }) {
   const query = useQuery({
     queryKey: ["health", service.key],
-    // Only Apollo is active in v1; its client exposes checkHealth() (→ BFF).
-    queryFn: () => getClient().checkHealth(),
+    // Each active service checks its own health through its BFF.
+    queryFn: () => healthCheckFor(service.key),
     // Health should feel live: revalidate periodically and on reconnect.
     refetchInterval: 15_000,
     retry: false,
