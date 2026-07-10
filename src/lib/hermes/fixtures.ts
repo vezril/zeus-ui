@@ -6,7 +6,7 @@
  */
 import type { HealthStatus } from "@/lib/apollo/types";
 import type { HermesClient } from "./client";
-import type { Labels, Topic, TopicSummary } from "./types";
+import type { Labels, Subscription, Topic, TopicSummary } from "./types";
 
 interface StoredTopic {
   labels: Labels;
@@ -34,6 +34,43 @@ function requireTopic(topicId: string): StoredTopic {
   if (!t || t.deleted) throw new Error(`Hermes 404: topic "${topicId}" not found`);
   return t;
 }
+
+// Subscriptions keyed by id, with varied queue-health stats (one dead-lettering).
+const subscriptions = new Map<string, Subscription>([
+  [
+    "orders.fulfillment",
+    {
+      subscriptionId: "orders.fulfillment",
+      topicId: "orders.events",
+      backlog: 42,
+      oldestUnackedAgeSeconds: 17,
+      redeliveredTotal: 3,
+      deadLetteredTotal: 0,
+    },
+  ],
+  [
+    "orders.analytics",
+    {
+      subscriptionId: "orders.analytics",
+      topicId: "orders.events",
+      backlog: 1289,
+      oldestUnackedAgeSeconds: 634,
+      redeliveredTotal: 51,
+      deadLetteredTotal: 7,
+    },
+  ],
+  [
+    "audit.archiver",
+    {
+      subscriptionId: "audit.archiver",
+      topicId: "audit.log",
+      backlog: 0,
+      oldestUnackedAgeSeconds: 0,
+      redeliveredTotal: 0,
+      deadLetteredTotal: 0,
+    },
+  ],
+]);
 
 export function fixtureHermesClient(): HermesClient {
   return {
@@ -65,6 +102,26 @@ export function fixtureHermesClient(): HermesClient {
     async deleteTopic(topicId: string): Promise<void> {
       const t = requireTopic(topicId);
       t.deleted = true;
+    },
+
+    async listSubscriptions(): Promise<Subscription[]> {
+      return [...subscriptions.values()]
+        .map((s) => ({ ...s }))
+        .sort((a, b) => a.subscriptionId.localeCompare(b.subscriptionId));
+    },
+
+    async createSubscription(subscriptionId: string, topicId: string): Promise<void> {
+      if (subscriptions.has(subscriptionId)) {
+        throw new Error(`Hermes 409: subscription "${subscriptionId}" already exists`);
+      }
+      subscriptions.set(subscriptionId, {
+        subscriptionId,
+        topicId,
+        backlog: 0,
+        oldestUnackedAgeSeconds: 0,
+        redeliveredTotal: 0,
+        deadLetteredTotal: 0,
+      });
     },
 
     async checkHealth(): Promise<HealthStatus> {

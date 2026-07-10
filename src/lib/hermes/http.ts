@@ -6,7 +6,7 @@
  */
 import type { HealthStatus } from "@/lib/apollo/types";
 import type { HermesClient } from "./client";
-import type { Labels, Topic, TopicSummary } from "./types";
+import type { Labels, Subscription, Topic, TopicSummary } from "./types";
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -59,6 +59,23 @@ export function httpHermesClient(base: string): HermesClient {
 
     async deleteTopic(topicId: string): Promise<void> {
       await expectOk(await fetch(url(topicPath(topicId)), { method: "DELETE" }));
+    },
+
+    async listSubscriptions(): Promise<Subscription[]> {
+      return json(await fetch(url(`/subscriptions`)));
+    },
+
+    async createSubscription(
+      subscriptionId: string,
+      topicId: string
+    ): Promise<void> {
+      await expectOk(
+        await fetch(url(`/subscriptions`), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ subscriptionId, topicId }),
+        })
+      );
     },
 
     async checkHealth(): Promise<HealthStatus> {
