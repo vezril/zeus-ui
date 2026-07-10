@@ -81,3 +81,31 @@ export interface TapHandle {
   onStatus(cb: (status: "open" | "error" | "closed") => void): void;
   close(): void;
 }
+
+// --- Dead-letter triage ---
+
+/**
+ * A dead-lettered message on the configured dead-letter topic. HermesMQ routes
+ * dead-letters there with `x-dead-letter-subscription`, `x-delivery-attempts`,
+ * and `x-original-message-id` attributes. `ackId` identifies the leased copy
+ * (for replay/discard). `originTopic` is derived from the source subscription;
+ * null when it can't be resolved (replay then unavailable).
+ */
+export interface DeadLetter {
+  ackId: string;
+  payload: string;
+  isText: boolean;
+  sourceSubscription: string;
+  deliveryAttempts: string;
+  originalMessageId: string;
+  originTopic: string | null;
+  publishTime: string;
+  attributes: Labels;
+}
+
+/** The dead-letter triage view: configured state + the current leased batch. */
+export interface DlqView {
+  configured: boolean;
+  dlqTopic: string | null;
+  messages: DeadLetter[];
+}

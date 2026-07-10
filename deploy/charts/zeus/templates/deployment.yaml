@@ -56,6 +56,10 @@ spec:
                   name: {{ .Values.hermes.token.secretName }}
                   key: {{ .Values.hermes.token.secretKey }}
             {{- end }}
+            {{- if .Values.hermes.dlqTopic }}
+            - name: HERMES_DLQ_TOPIC
+              value: {{ .Values.hermes.dlqTopic | quote }}
+            {{- end }}
           readinessProbe:
             httpGet:
               path: /

@@ -8,6 +8,8 @@ import type { HealthStatus } from "@/lib/apollo/types";
 import type { HermesClient } from "./client";
 import { isInspectorSub } from "./inspector";
 import type {
+  DeadLetter,
+  DlqView,
   Labels,
   PublishInput,
   PublishResult,
@@ -130,6 +132,35 @@ export function httpHermesClient(base: string): HermesClient {
       return subs.filter(
         (s) => s.topicId === topicId && !isInspectorSub(s.subscriptionId)
       ).length;
+    },
+
+    async listDeadLetters(): Promise<DlqView> {
+      return json(await fetch(url(`/dlq`)));
+    },
+
+    async replayDeadLetter(message: DeadLetter): Promise<void> {
+      await expectOk(
+        await fetch(url(`/dlq/replay`), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            ackId: message.ackId,
+            originTopic: message.originTopic,
+            payload: message.payload,
+            attributes: message.attributes,
+          }),
+        })
+      );
+    },
+
+    async discardDeadLetter(ackId: string): Promise<void> {
+      await expectOk(
+        await fetch(url(`/dlq/discard`), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ackId }),
+        })
+      );
     },
 
     async checkHealth(): Promise<HealthStatus> {

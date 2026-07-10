@@ -45,6 +45,9 @@ hermes:
   token:
     secretName: ""
     secretKey: token
+  # HermesMQ's configured dead-letter topic (matches Hermes's own config). When
+  # empty, the Dead-letters view shows a "not configured" state.
+  dlqTopic: ""
 
 service:
   port: 80

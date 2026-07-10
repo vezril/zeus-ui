@@ -8,6 +8,8 @@ import type { HealthStatus } from "@/lib/apollo/types";
 import type { HermesClient } from "./client";
 import { isInspectorSub } from "./inspector";
 import type {
+  DeadLetter,
+  DlqView,
   Labels,
   PublishInput,
   PublishResult,
@@ -86,6 +88,47 @@ const subscriptions = new Map<string, Subscription>([
     },
   ],
 ]);
+
+// A configured dead-letter topic + a seed of dead-lettered messages covering the
+// three cases: replayable, binary (replay unavailable), and an unresolvable
+// source subscription (replay unavailable).
+const DLQ_TOPIC = "dead-letters";
+let deadLetters: DeadLetter[] = [
+  {
+    ackId: "dl-1",
+    payload: '{"orderId":"A-1001","error":"handler timeout"}',
+    isText: true,
+    sourceSubscription: "orders.fulfillment",
+    deliveryAttempts: "5",
+    originalMessageId: "msg-8f3a",
+    originTopic: "orders.events",
+    publishTime: "2026-07-10T02:11:04.000Z",
+    attributes: { "x-dead-letter-subscription": "orders.fulfillment" },
+  },
+  {
+    ackId: "dl-2",
+    payload: "��binary�",
+    isText: false,
+    sourceSubscription: "media.thumbnailer",
+    deliveryAttempts: "5",
+    originalMessageId: "msg-11bc",
+    originTopic: "media.ingested",
+    publishTime: "2026-07-10T02:15:41.000Z",
+    attributes: { "x-dead-letter-subscription": "media.thumbnailer" },
+  },
+  {
+    ackId: "dl-3",
+    payload: '{"orphan":true}',
+    isText: true,
+    sourceSubscription: "deleted.consumer",
+    deliveryAttempts: "5",
+    originalMessageId: "msg-22de",
+    // Source subscription no longer resolves → origin unknown → replay unavailable.
+    originTopic: null,
+    publishTime: "2026-07-10T02:20:09.000Z",
+    attributes: { "x-dead-letter-subscription": "deleted.consumer" },
+  },
+];
 
 // In-memory tap registry: topicId → set of live feed callbacks. Fixtures simulate
 // a tap by echoing published messages back to any open tap on that topic.
@@ -190,6 +233,33 @@ export function fixtureHermesClient(): HermesClient {
       return [...subscriptions.values()].filter(
         (s) => s.topicId === topicId && !isInspectorSub(s.subscriptionId)
       ).length;
+    },
+
+    async listDeadLetters(): Promise<DlqView> {
+      return {
+        configured: true,
+        dlqTopic: DLQ_TOPIC,
+        messages: deadLetters.map((m) => ({ ...m })),
+      };
+    },
+
+    async replayDeadLetter(message: DeadLetter): Promise<void> {
+      if (!message.originTopic) {
+        throw new Error("Hermes: origin topic unknown — cannot replay");
+      }
+      // Re-publish to the origin (echoes onto any open tap there), then remove.
+      emitToTaps(message.originTopic, {
+        id: crypto.randomUUID(),
+        payload: message.payload,
+        isText: message.isText,
+        attributes: { ...message.attributes },
+        publishTime: new Date().toISOString(),
+      });
+      deadLetters = deadLetters.filter((m) => m.ackId !== message.ackId);
+    },
+
+    async discardDeadLetter(ackId: string): Promise<void> {
+      deadLetters = deadLetters.filter((m) => m.ackId !== ackId);
     },
 
     async checkHealth(): Promise<HealthStatus> {

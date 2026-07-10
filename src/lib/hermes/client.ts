@@ -6,6 +6,8 @@
  */
 import type { HealthStatus } from "@/lib/apollo/types";
 import type {
+  DeadLetter,
+  DlqView,
   Labels,
   PublishInput,
   PublishResult,
@@ -49,6 +51,15 @@ export interface HermesClient {
 
   /** GET /api/hermes/subscriptions filtered — count of real (non-inspector) subscribers on a topic. */
   realSubscriberCount(topicId: string): Promise<number>;
+
+  /** GET /api/hermes/dlq — the dead-letter triage view (configured state + leased batch). */
+  listDeadLetters(): Promise<DlqView>;
+
+  /** POST /api/hermes/dlq/replay — re-publish to the origin topic and remove from the DLQ. */
+  replayDeadLetter(message: DeadLetter): Promise<void>;
+
+  /** POST /api/hermes/dlq/discard — remove from the DLQ without republishing. */
+  discardDeadLetter(ackId: string): Promise<void>;
 
   /** GET /api/hermes/health — HermesMQ health via the BFF (for the dashboard tile). */
   checkHealth(): Promise<HealthStatus>;
