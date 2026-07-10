@@ -40,7 +40,7 @@ export function TopicManager() {
   const [pendingCreate, setPendingCreate] = React.useState<string[]>([]);
   const [pendingDelete, setPendingDelete] = React.useState<string[]>([]);
 
-  const listed = data ?? [];
+  const listed = React.useMemo(() => data ?? [], [data]);
   const listedIds = React.useMemo(
     () => new Set(listed.map((t) => t.topicId)),
     [listed]
