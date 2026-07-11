@@ -8,6 +8,7 @@ import type { PutObjectResult } from "@/lib/apollo";
 import { validateObjectKey } from "@/lib/apollo/validation";
 import { composeKey, detectContentType } from "@/lib/upload";
 import { formatBytes } from "@/lib/format";
+import { uid } from "@/lib/uid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,7 +66,7 @@ export function UploadDialog({
 
   function addFiles(files: File[]) {
     const added: UploadItem[] = files.map((file) => ({
-      id: crypto.randomUUID(),
+      id: uid(),
       file,
       key: composeKey(prefix, file.name),
       contentType: detectContentType(file),

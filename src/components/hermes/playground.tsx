@@ -7,6 +7,7 @@ import { AlertTriangle, Copy, Radio, Send } from "lucide-react";
 import { getHermesClient } from "@/lib/hermes";
 import type { Labels, TapMessage } from "@/lib/hermes";
 import { TAP_ORIGIN_ATTR } from "@/lib/hermes/types";
+import { uid } from "@/lib/uid";
 import { useTopics } from "@/lib/hooks/use-topics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ export function Playground() {
 
   // A per-view marker so the tap can flag messages this view published as "mine".
   const tapOrigin = React.useRef<string>("");
-  if (!tapOrigin.current) tapOrigin.current = crypto.randomUUID();
+  if (!tapOrigin.current) tapOrigin.current = uid();
 
   // --- Live tap ---
   const [feed, setFeed] = React.useState<FeedItem[]>([]);
