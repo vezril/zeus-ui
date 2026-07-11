@@ -5,6 +5,7 @@
  * BFF-backed HTTP client via the env selector in index.ts.
  */
 import type { HealthStatus } from "@/lib/apollo/types";
+import { uid } from "@/lib/uid";
 import type { HermesClient } from "./client";
 import { isInspectorSub } from "./inspector";
 import type {
@@ -148,10 +149,10 @@ export function fixtureHermesClient(): HermesClient {
     },
 
     async publish(input: PublishInput): Promise<PublishResult> {
-      const messageId = crypto.randomUUID();
+      const messageId = uid();
       // Echo onto any open tap for this topic so the "see interactions" loop works.
       emitToTaps(input.topicId, {
-        id: crypto.randomUUID(),
+        id: uid(),
         payload: input.payload,
         isText: true,
         attributes: { ...input.attributes },

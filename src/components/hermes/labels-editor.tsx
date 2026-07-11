@@ -4,6 +4,7 @@ import * as React from "react";
 import { Plus, X } from "lucide-react";
 
 import type { Labels } from "@/lib/hermes";
+import { uid } from "@/lib/uid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -15,7 +16,7 @@ interface Pair {
 
 function toPairs(labels: Labels): Pair[] {
   return Object.entries(labels).map(([key, value]) => ({
-    id: crypto.randomUUID(),
+    id: uid(),
     key,
     value,
   }));
@@ -90,7 +91,7 @@ export function LabelsEditor({
         variant="outline"
         size="sm"
         onClick={() =>
-          update([...pairs, { id: crypto.randomUUID(), key: "", value: "" }])
+          update([...pairs, { id: uid(), key: "", value: "" }])
         }
       >
         <Plus className="size-4" />
