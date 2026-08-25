@@ -5,14 +5,7 @@
  * (design: "build for find-all now"). Only Apollo ships in v1; the rest are
  * visible-but-disabled "coming soon" stubs.
  */
-import {
-  Boxes,
-  Eye,
-  Hammer,
-  Send,
-  Tags,
-  type LucideIcon,
-} from "lucide-react";
+import { Boxes, Eye, Hammer, Tags, type LucideIcon } from "lucide-react";
 
 export type ServiceStatus = "active" | "coming-soon";
 
@@ -35,14 +28,6 @@ export const SERVICES: ServiceDef[] = [
     icon: Boxes,
     status: "active",
     href: "/apollo",
-  },
-  {
-    key: "hermes",
-    name: "Hermes",
-    blurb: "Message queue — topics, publish, DLQ",
-    icon: Send,
-    status: "active",
-    href: "/hermes",
   },
   {
     key: "artemis",

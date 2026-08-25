@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getClient } from "@/lib/apollo";
 import type { HealthStatus } from "@/lib/apollo";
-import { getHermesClient } from "@/lib/hermes";
 import { SERVICES } from "@/lib/services";
 import { HealthTile, type TileState } from "./health-tile";
 
@@ -13,8 +12,6 @@ function healthCheckFor(key: string): Promise<HealthStatus> {
   switch (key) {
     case "apollo":
       return getClient().checkHealth();
-    case "hermes":
-      return getHermesClient().checkHealth();
     default:
       return Promise.resolve("UNKNOWN");
   }

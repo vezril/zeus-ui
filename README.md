@@ -9,7 +9,7 @@ for humans to *manage* services directly.
 
 The first module is **Apollo**, the object store: create/delete buckets,
 upload/download/delete objects, inspect metadata. The layout is multi-service
-from day one, so later modules (Hermes, Artemis, …) slot in additively — each
+from day one, so later modules (Artemis, Hephaestus, …) slot in additively — each
 shipped as its own change, one service at a time.
 
 ## The defining decision — a BFF
