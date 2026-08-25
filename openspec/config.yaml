@@ -4,7 +4,8 @@ context: |
   Zeus — the constellation's operator/admin console (Next.js). NOT the public gallery (that is
   Muses); Zeus is a control panel for humans to *manage* services directly. v1 ships the **Apollo**
   object-store module; the layout is built multi-service from day one (`/` health dashboard,
-  `/apollo/**`, later `/hermes/**`, `/artemis/**`).
+  `/apollo/**`, later `/artemis/**`). (The Hermes module was removed — HermesMQ has its own
+  standalone console, hermes-ui.)
 
   Defining constraint: Apollo is **gRPC-only** with two streaming RPCs (PutObject=client-stream,
   GetObject=server-stream), so the browser cannot call it directly. Zeus runs a thin **Next.js BFF**
